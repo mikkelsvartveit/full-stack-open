@@ -3,12 +3,22 @@ import Filter from "./components/Filter";
 import Persons from "./components/Persons";
 import PersonForm from "./components/PersonForm";
 import phonebookService from "./services/phonebook";
+import "./index.css";
+
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null;
+  }
+
+  return <div className="success">{message}</div>;
+};
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filter, setFilter] = useState("");
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     phonebookService
@@ -34,9 +44,12 @@ const App = () => {
   };
 
   const deleteName = (id) => {
-    if (window.confirm(`Delete ${persons.find((p) => p.id === id).name}?`))
+    const name = persons.find((p) => p.id === id).name;
+    if (window.confirm(`Delete ${name}?`))
       phonebookService.deleteEntry(id).then(() => {
         setPersons(persons.filter((person) => person.id !== id));
+        setNotification(`Deleted ${name}`);
+        setTimeout(() => setNotification(null), 3000);
       });
   };
 
@@ -55,18 +68,25 @@ const App = () => {
             name: existingPerson.name,
             number: newNumber,
           })
-          .then((returnedPerson) =>
+          .then((returnedPerson) => {
             setPersons(
               persons.map((person) =>
                 person.id === returnedPerson.id ? returnedPerson : person
               )
-            )
-          );
+            );
+            setNotification(`Changed ${existingPerson.name}'s number`);
+            setTimeout(() => setNotification(null), 3000);
+          });
       }
     } else {
       phonebookService
         .newEntry({ name: newName, number: newNumber })
-        .then((returnedPersons) => setPersons([...persons, returnedPersons]));
+        .then((returnedPersons) => {
+          setPersons([...persons, returnedPersons]);
+          setNotification(`Added ${newName}`);
+          setTimeout(() => setNotification(null), 3000);
+        });
+
       setNewName("");
       setNewNumber("");
     }
@@ -87,6 +107,8 @@ const App = () => {
         handleNewNumberChange={handleNewNumberChange}
         addName={addName}
       />
+
+      <Notification message={notification} />
 
       <h3>Numbers</h3>
 
