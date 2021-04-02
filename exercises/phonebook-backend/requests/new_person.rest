@@ -1,0 +1,7 @@
+POST https://boiling-savannah-99548.herokuapp.com/api/persons
+Content-Type: application/json
+
+{
+    "name": "Mikkel Svartveit",
+    "number": "48085661"
+}

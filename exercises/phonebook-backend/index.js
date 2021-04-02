@@ -1,13 +1,15 @@
-const { json } = require("express");
 const express = require("express");
-const app = express();
-app.use(express.json());
-
+const cors = require("cors");
 const morgan = require("morgan");
 morgan.token("data", (request, response) =>
   request.method === "POST" ? JSON.stringify(request.body) : ""
 );
 
+const app = express();
+
+app.use(express.static("build"));
+app.use(express.json());
+app.use(cors());
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :data")
 );
@@ -85,7 +87,7 @@ app.post("/api/persons", (request, response) => {
   response.json(newEntry);
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log("Phonebook server running on port " + PORT);
 });
