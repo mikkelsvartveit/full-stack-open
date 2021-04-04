@@ -1,15 +1,17 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-morgan.token("data", (request, response) =>
-  request.method === "POST" ? JSON.stringify(request.body) : ""
-);
-
+const Person = require("./models/person");
 const app = express();
 
 app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
+
+morgan.token("data", (request, response) =>
+  request.method === "POST" ? JSON.stringify(request.body) : ""
+);
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :data")
 );
@@ -38,25 +40,30 @@ let phonebook = [
 ];
 
 app.get("/api/persons", (request, response) => {
-  response.json(phonebook);
+  Person.find({}).then((result) => {
+    response.json(result);
+  });
 });
 
 app.get("/info", (request, response) => {
-  response.send(`
-    <p>Phonebook has info for ${phonebook.length} people</p>
+  Person.find({}).then((result) => {
+    response.send(`
+    <p>Phonebook has info for ${result.length} people</p>
     <p>${new Date()}</p>
   `);
+  });
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = phonebook.find((entry) => entry.id === id);
+  const id = request.params.id;
 
-  if (person) {
-    response.json(phonebook.find((entry) => entry.id === id));
-  } else {
-    response.status(404).end();
-  }
+  Person.findById(id).then((result) => {
+    if (result) {
+      response.json(result);
+    } else {
+      response.status(404).end();
+    }
+  });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -67,27 +74,30 @@ app.delete("/api/persons/:id", (request, response) => {
 });
 
 app.post("/api/persons", (request, response) => {
-  const id = Math.floor(Math.random() * 1000000);
-
   if (!request.body.name || !request.body.name) {
     return response.status(400).json({ error: "missing name or number!" });
-  } else if (phonebook.find((entry) => entry.name === request.body.name)) {
-    return response
-      .status(400)
-      .json({ error: "person is already in phonebook!" });
   }
 
-  const newEntry = {
-    id: id,
-    name: request.body.name,
-    number: request.body.number,
-  };
+  Person.find({ name: request.body.name }).then((result) => {
+    console.log(result);
+    if (result.length !== 0) {
+      return response
+        .status(400)
+        .json({ error: "person is already in phonebook!" });
+    } else {
+      const person = new Person({
+        name: request.body.name,
+        number: request.body.number,
+      });
 
-  phonebook = [...phonebook, newEntry];
-  response.json(newEntry);
+      person.save().then((result) => {
+        response.json(result);
+      });
+    }
+  });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log("Phonebook server running on port " + PORT);
 });
