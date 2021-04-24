@@ -53,27 +53,23 @@ app.delete("/api/persons/:id", (request, response, next) => {
     .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   if (!request.body.name || !request.body.name) {
     return response.status(400).json({ error: "missing name or number!" });
   }
 
   Person.find({ name: request.body.name }).then((result) => {
-    console.log(result);
-    if (result.length !== 0) {
-      return response
-        .status(400)
-        .json({ error: "person is already in phonebook!" });
-    } else {
-      const person = new Person({
-        name: request.body.name,
-        number: request.body.number,
-      });
+    const person = new Person({
+      name: request.body.name,
+      number: request.body.number,
+    });
 
-      person.save().then((result) => {
+    person
+      .save()
+      .then((result) => {
         response.json(result);
-      });
-    }
+      })
+      .catch((error) => next(error));
   });
 });
 
@@ -85,7 +81,17 @@ app.put("/api/persons/:id", (request, response, next) => {
     number: request.body.number,
   };
 
-  Person.findByIdAndUpdate(id, note, { new: true })
+  // Person.findByIdAndUpdate(id, note, { new: true })
+  //   .then((result) => {
+  //     response.json(result);
+  //   })
+  //   .catch((error) => next(error));
+
+  Person.findOneAndUpdate({ _id: id }, note, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((result) => {
       response.json(result);
     })
@@ -95,6 +101,8 @@ app.put("/api/persons/:id", (request, response, next) => {
 const errorHandler = (error, request, response, next) => {
   if (error.name == "CastError") {
     return response.status(400).send({ error: "invalid id format" });
+  } else if (error.name == "ValidationError") {
+    return response.status(400).send({ error: error.message });
   }
 
   next(error);

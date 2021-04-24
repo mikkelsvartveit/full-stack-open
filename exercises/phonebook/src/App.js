@@ -13,12 +13,21 @@ const Notification = ({ message }) => {
   return <div className="success">{message}</div>;
 };
 
+const Error = ({ message }) => {
+  if (message === null) {
+    return null;
+  }
+
+  return <div className="error">{message}</div>;
+};
+
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filter, setFilter] = useState("");
   const [notification, setNotification] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     phonebookService
@@ -76,6 +85,11 @@ const App = () => {
             );
             setNotification(`Changed ${existingPerson.name}'s number`);
             setTimeout(() => setNotification(null), 3000);
+          })
+          .catch((error) => {
+            console.log(error.response.data.error);
+            setError(error.response.data.error);
+            setTimeout(() => setError(null), 3000);
           });
       }
     } else {
@@ -85,6 +99,11 @@ const App = () => {
           setPersons([...persons, returnedPersons]);
           setNotification(`Added ${newName}`);
           setTimeout(() => setNotification(null), 3000);
+        })
+        .catch((error) => {
+          console.log(error.response.data.error);
+          setError(error.response.data.error);
+          setTimeout(() => setError(null), 3000);
         });
 
       setNewName("");
@@ -109,6 +128,8 @@ const App = () => {
       />
 
       <Notification message={notification} />
+
+      <Error message={error} />
 
       <h3>Numbers</h3>
 
