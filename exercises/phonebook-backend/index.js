@@ -9,7 +9,7 @@ app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
 
-morgan.token("data", (request, response) =>
+morgan.token("data", (request) =>
   request.method === "POST" ? JSON.stringify(request.body) : ""
 );
 app.use(
@@ -47,7 +47,7 @@ app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
 
   Person.findByIdAndRemove(id)
-    .then((result) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch((error) => next(error));
@@ -58,7 +58,7 @@ app.post("/api/persons", (request, response, next) => {
     return response.status(400).json({ error: "missing name or number!" });
   }
 
-  Person.find({ name: request.body.name }).then((result) => {
+  Person.find({ name: request.body.name }).then(() => {
     const person = new Person({
       name: request.body.name,
       number: request.body.number,
